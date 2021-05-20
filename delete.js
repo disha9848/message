@@ -8,24 +8,22 @@ let awsConfig ={
 AWS.config.update(awsConfig);
 
 let docClient = new AWS.DynamoDB.DocumentClient();
-let save = function() {
-    var input={
-        "email_id": "disha@gmail.com","created_by": "clientUser","created_on": new Date().toString(),
-        "updated_by": "clientUser", "updated_on": new Date().toString(), "is_deleted": false
-    }
-
+let remove = function() {
     var params = {
         TableName: "users",
-        Item: input
+        Key: {
+            "email_id" : "disha@gmail.com"
+        }
     };
-        docClient.put(params, function(err, data){
+        docClient.delete(params, function(err, data){
+            console.log("data")
             if(err){
-                console.log("users::save::error - "+ JSON.stringify(err, null, 2));
+                console.log("users::remove::error - "+ JSON.stringify(err, null, 2));
             }
             else{
-                console.log("users::save::success");
+                console.log("users::remove::success");
             }
         })
 }
 
-save();
+remove();

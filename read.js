@@ -1,27 +1,29 @@
-const AWS= require('aws-sdk');
-const ddb= new AWS.DynamoDB.DocumentClient({region: 'us-east-1'});
-
-exports.handler = async (event, context, callback) => {
-    await readMessage().then(data => {
-        data.Items.forEach(function(item) {
-            console.log(item.message)
-        })
-        callback(null, {
-             statusCode : 200,
-             body: data.Items,
-             headers: {
-                  'Access-Control-Origin' : '*',
-             },
-        })
-    }).catch((err) => {
-        console.error(err)
-    })
+var AWS= require('aws-sdk');
+let awsConfig ={
+    "region" : "us-east-1",
+    "endpoint" : "http://dynamodb.us-east-1.amazonaws.com",
+    "accessKeyId": "AKIA6L5HW77PZRI5YKE6", "secretAccessKey":"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"
 };
 
-function readMessage(){
-    const params= {
-        TableName: 'Message',
-        Limit: 10
-    }
-    return ddb.scan(params).promise();
+AWS.config.update(awsConfig);
+
+let docClient = new AWS.DynamoDB.DocumentClient();
+let fetchOneByKey = function() {
+    var params = {
+        TableName: "users",
+        Key: {
+            "email_id" : "exampl@gmail.com"
+        }
+    };
+        docClient.get(params, function(err, data){
+            console.log("data")
+            if(err){
+                console.log("users::fetchOneByKey::error - "+ JSON.stringify(err, null, 2));
+            }
+            else{
+                console.log("users::fetchOneByKey::success - "+ JSON.stringify(data, null, 2));
+            }
+        })
 }
+
+fetchOneByKey();
