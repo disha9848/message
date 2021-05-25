@@ -4,6 +4,7 @@ AWS.config.update( {
 });
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 const dynamodbTableName = 'Message';
+const dynamodbTableName2 = 'users';
 const healthPath = '/health';
 const messagePath = '/message';
 
@@ -15,7 +16,7 @@ exports.handler = async function(event) {
       response = buildResponse(200);
       break;
     case event.httpMethod === 'GET' && event.path === messagePath:
-      response = await getMessage(event.queryStringParameters.messageId);
+      response = await getMessage();
       break;
     case event.httpMethod === 'POST' && event.path === messagePath:
       response = await saveMessage(JSON.parse(event.body));
@@ -23,23 +24,53 @@ exports.handler = async function(event) {
     case event.httpMethod === 'DELETE' && event.path === messagePath:
       response = await deleteMessage(JSON.parse(event.body).messageId);
       break;
+    case event.httpMethod === 'PATCH' && event.path === messagePath:
+      response = await updateMessage();
+      break;
     default:
       response = buildResponse(404, '404 Not Found');
   }
   return response;
 }
 
-async function getMessage(messageId) {
+async function getMessage() {
   const params = {
     TableName: dynamodbTableName,
-    Key: {
-      'messageId': messageId,
-      "status": "False"
+    //FilterExpression: "contains(message, :message)",
+    FilterExpression: "begins_with(message, :message)",
+    ExpressionAttributeValues:{
+      ":message":"I"
     }
   }
   
-  return await dynamodb.get_item(params).promise().then((response) => {
-    return buildResponse(200, response.Item);
+  return await dynamodb.scan(params).promise().then((response) => {
+    console.log(response.Items)
+    return buildResponse(200, response.Items);
+  }, (error) => {
+    console.error('error: ', error);
+  });
+}
+
+async function updateMessage() {
+  const params = {
+    TableName: dynamodbTableName,
+    Key: {
+            "id": "1"
+    },
+    UpdateExpression: "set message = :x, #MyVariable = :y",
+    ExpressionAttributeNames: {
+      "#MyVariable": "messageType"
+    },
+    ExpressionAttributeValues: {
+      ":x": "I am Disha Agarwal",
+      ":y": "Formal Message"
+    }
+  }
+  console.log(params)
+  
+  return await dynamodb.update(params).promise().then((response) => {
+    //console.log(response);
+    return buildResponse(200, response);
   }, (error) => {
     console.error('error: ', error);
   });
